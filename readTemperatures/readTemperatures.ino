@@ -22,7 +22,7 @@
  */
 
 #include <Arduino.h>
-#include <i2c_t3.h>
+#include <Wire.h>
 #include "MLX90621.h"
 
 MLX90621 sensor; // create an instance of the Sensor class

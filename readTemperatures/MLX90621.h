@@ -12,7 +12,7 @@
 
 //Libraries to be included
 #include <Arduino.h>
-#include <i2c_t3.h>
+#include <Wire.h>
 
 //Begin registers
 #define CAL_ACOMMON_L 0xD0

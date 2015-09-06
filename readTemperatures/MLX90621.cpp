@@ -8,7 +8,8 @@
 
 void MLX90621::initialise(int refrate) {
 	refreshRate = refrate;
-	Wire.begin(I2C_MASTER, 0, I2C_PINS_18_19, I2C_PULLUP_INT, I2C_RATE_100);
+	//Wire.begin(I2C_MASTER, 0, I2C_PINS_18_19, I2C_PULLUP_INT, I2C_RATE_100);
+        Wire.begin();
 	delay(5);
 	readEEPROM();
 	writeTrimmingValue();
@@ -69,11 +70,11 @@ void MLX90621::setConfiguration() {
 	}
 	byte defaultConfig_H = 0b01000110;  //kmoto: See data sheet p.11 and 25
 	Wire.beginTransmission(0x60);
-	Wire.send(0x03);
-	Wire.send((byte) Hz_LSB - 0x55);
-	Wire.send(Hz_LSB);
-	Wire.send(defaultConfig_H - 0x55);
-	Wire.send(defaultConfig_H);
+	Wire.write(0x03);
+	Wire.write((byte) Hz_LSB - 0x55);
+	Wire.write(Hz_LSB);
+	Wire.write(defaultConfig_H - 0x55);
+	Wire.write(defaultConfig_H);
 	Wire.endTransmission();
 
 	//Read the resolution from the config register
@@ -82,7 +83,7 @@ void MLX90621::setConfiguration() {
 
 void MLX90621::readEEPROM() {
 	Wire.beginTransmission(0x50);
-	Wire.send(0x00);
+	Wire.write(0x00);
 	Wire.requestFrom(0x50, 256);
 	for (int i = 0; i <= 255; i++) {
 		eepromData[i] = Wire.read();
@@ -92,11 +93,11 @@ void MLX90621::readEEPROM() {
 
 void MLX90621::writeTrimmingValue() {
 	Wire.beginTransmission(0x60);
-	Wire.send(0x04);
-	Wire.send((byte) eepromData[OSC_TRIM_VALUE] - 0xAA);
-	Wire.send(eepromData[OSC_TRIM_VALUE]);
-	Wire.send(0x56);
-	Wire.send(0x00);
+	Wire.write(0x04);
+	Wire.write((byte) eepromData[OSC_TRIM_VALUE] - 0xAA);
+	Wire.write(eepromData[OSC_TRIM_VALUE]);
+	Wire.write(0x56);
+	Wire.write(0x00);
 	Wire.endTransmission();
 }
 
@@ -169,11 +170,11 @@ void MLX90621::calculateTO() {
 
 void MLX90621::readIR() {
 	Wire.beginTransmission(0x60);
-	Wire.send(0x02);
-	Wire.send(0x00);
-	Wire.send(0x01);
-	Wire.send(0x40);
-	Wire.endTransmission(I2C_NOSTOP);
+	Wire.write(0x02);
+	Wire.write(0x00);
+	Wire.write(0x01);
+	Wire.write(0x40);
+	Wire.endTransmission(false);
 	Wire.requestFrom(0x60, 128);
 	for (int i = 0; i < 64; i++) {
 		byte pixelDataLow = Wire.read();
@@ -185,11 +186,11 @@ void MLX90621::readIR() {
 
 void MLX90621::readPTAT() {
 	Wire.beginTransmission(0x60);
-	Wire.send(0x02);
-	Wire.send(0x40);
-	Wire.send(0x00);
-	Wire.send(0x01);
-	Wire.endTransmission(I2C_NOSTOP);
+	Wire.write(0x02);
+	Wire.write(0x40);
+	Wire.write(0x00);
+	Wire.write(0x01);
+	Wire.endTransmission(false);
 	Wire.requestFrom(0x60, 2);
 	byte ptatLow = Wire.read();
 	byte ptatHigh = Wire.read();
@@ -199,11 +200,11 @@ void MLX90621::readPTAT() {
 
 void MLX90621::readCPIX() {
 	Wire.beginTransmission(0x60);
-	Wire.send(0x02);
-	Wire.send(0x41);
-	Wire.send(0x00);
-	Wire.send(0x01);
-	Wire.endTransmission(I2C_NOSTOP);
+	Wire.write(0x02);
+	Wire.write(0x41);
+	Wire.write(0x00);
+	Wire.write(0x01);
+	Wire.endTransmission(false);
 	Wire.requestFrom(0x60, 2);
 	byte cpixLow = Wire.read();
 	byte cpixHigh = Wire.read();
@@ -215,11 +216,11 @@ void MLX90621::readCPIX() {
 
 uint16_t MLX90621::readConfig() {
 	Wire.beginTransmission(0x60);
-	Wire.send(0x02);
-	Wire.send(0x92);
-	Wire.send(0x00);
-	Wire.send(0x01);
-	Wire.endTransmission(I2C_NOSTOP);
+	Wire.write(0x02);
+	Wire.write(0x92);
+	Wire.write(0x00);
+	Wire.write(0x01);
+	Wire.endTransmission(false);
 	Wire.requestFrom(0x60, 2);
 	byte configLow = Wire.read();
 	byte configHigh = Wire.read();
