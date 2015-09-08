@@ -35,6 +35,7 @@ void setup(){
 }
 void loop(){
   sensor.measure(); //get new readings from the sensor
+  
   for(int y=0;y<4;y++){ //go through all the rows
     Serial.print("[");
     
@@ -48,6 +49,8 @@ void loop(){
     if (y<3)Serial.print("~"); 
   }
   Serial.print("\n");
+  
+  //Serial.println(sensor.getAmbient());
   delay(50);
 };
 

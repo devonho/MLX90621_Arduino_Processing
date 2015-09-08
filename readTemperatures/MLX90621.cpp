@@ -9,8 +9,8 @@
 void MLX90621::initialise(int refrate) {
 	refreshRate = refrate;
 	//Wire.begin(I2C_MASTER, 0, I2C_PINS_18_19, I2C_PULLUP_INT, I2C_RATE_100);
-        Wire.begin();
-	delay(5);
+  Wire.begin();
+  delay(5);
 	readEEPROM();
 	writeTrimmingValue();
 	setConfiguration();
@@ -75,30 +75,43 @@ void MLX90621::setConfiguration() {
 	Wire.write(Hz_LSB);
 	Wire.write(defaultConfig_H - 0x55);
 	Wire.write(defaultConfig_H);
-	Wire.endTransmission();
-
+	byte rc = Wire.endTransmission();
+        if(rc) {
+          Serial.print("setConfiguration: Error = ");
+          Serial.println(rc);
+        }
 	//Read the resolution from the config register
 	resolution = (readConfig() & 0x30) >> 4;
 }
 
-void MLX90621::readEEPROM() {
-	Wire.beginTransmission(0x50);
-	Wire.write(0x00);
-	Wire.requestFrom(0x50, 256);
-	for (int i = 0; i <= 255; i++) {
-		eepromData[i] = Wire.read();
-	}
-	Wire.endTransmission();
+void MLX90621::readEEPROM() { // Read in blocks of 32 bytes to accomodate Wire library
+  for(int j=0;j<256;j+=32) {
+    Wire.beginTransmission(0x50);
+    Wire.write(j);
+    byte rc = Wire.endTransmission(false);
+    if(rc) {
+      Serial.print("rdEEPROM: ");
+      Serial.println(rc);
+    }
+    Wire.requestFrom(0x50, 32);
+    for (int i = 0; i < 32; i++) {
+      eepromData[j+i] = Wire.read();
+    }
+  }
 }
 
 void MLX90621::writeTrimmingValue() {
-	Wire.beginTransmission(0x60);
+ 	Wire.beginTransmission(0x60);
 	Wire.write(0x04);
-	Wire.write((byte) eepromData[OSC_TRIM_VALUE] - 0xAA);
-	Wire.write(eepromData[OSC_TRIM_VALUE]);
+  Wire.write((byte) eepromData[OSC_TRIM_VALUE] - 0xAA);
+  Wire.write(eepromData[OSC_TRIM_VALUE]);
 	Wire.write(0x56);
 	Wire.write(0x00);
-	Wire.endTransmission();
+	byte rc = Wire.endTransmission(); 
+  if(rc) {
+    Serial.print("wrTrimmVal: ");
+    Serial.println(rc);
+  }
 }
 
 void MLX90621::calculateTA(void) {
@@ -169,19 +182,25 @@ void MLX90621::calculateTO() {
 }
 
 void MLX90621::readIR() {
-	Wire.beginTransmission(0x60);
-	Wire.write(0x02);
-	Wire.write(0x00);
-	Wire.write(0x01);
-	Wire.write(0x40);
-	Wire.endTransmission(false);
-	Wire.requestFrom(0x60, 128);
-	for (int i = 0; i < 64; i++) {
-		byte pixelDataLow = Wire.read();
-		byte pixelDataHigh = Wire.read();
-		irData[i] = (int16_t) (pixelDataHigh << 8) | pixelDataLow;
-	}
-	Wire.endTransmission();
+
+  for(int j=0;j<128;j+=32) { // Read in blocks of 32 bytes to overcome Wire buffer limit
+    Wire.beginTransmission(0x60);
+    Wire.write(0x02);
+    Wire.write(j);
+    Wire.write(0x01);
+    Wire.write(0x20);
+    byte rc = Wire.endTransmission(false);
+    if(rc) {
+      Serial.print("rdIR: ");
+      Serial.println(rc);
+    }  
+    Wire.requestFrom(0x60, 32);
+    for (int i = 0; i < 16; i++) {
+      byte pixelDataLow = Wire.read();
+      byte pixelDataHigh = Wire.read();
+      irData[i] = (int16_t) (pixelDataHigh << 8) | pixelDataLow;
+    }
+  }
 }
 
 void MLX90621::readPTAT() {
@@ -190,11 +209,16 @@ void MLX90621::readPTAT() {
 	Wire.write(0x40);
 	Wire.write(0x00);
 	Wire.write(0x01);
-	Wire.endTransmission(false);
+	byte rc = Wire.endTransmission(false);
+        if(rc) {
+          Serial.print("rdPTAT: ");
+          Serial.println(rc);
+        }
+
 	Wire.requestFrom(0x60, 2);
 	byte ptatLow = Wire.read();
 	byte ptatHigh = Wire.read();
-	Wire.endTransmission();
+
 	ptat = ((uint16_t) (ptatHigh << 8) | ptatLow);
 }
 
@@ -204,11 +228,15 @@ void MLX90621::readCPIX() {
 	Wire.write(0x41);
 	Wire.write(0x00);
 	Wire.write(0x01);
-	Wire.endTransmission(false);
+	byte rc = Wire.endTransmission(false);
+  if(rc) {
+    Serial.print("rdCPIX: ");
+    Serial.println(rc);
+  }
 	Wire.requestFrom(0x60, 2);
 	byte cpixLow = Wire.read();
 	byte cpixHigh = Wire.read();
-	Wire.endTransmission();
+
 	cpix = ((int16_t) (cpixHigh << 8) | cpixLow);
 	if (cpix >= 32768)
 		cpix -= 65536;
@@ -220,11 +248,16 @@ uint16_t MLX90621::readConfig() {
 	Wire.write(0x92);
 	Wire.write(0x00);
 	Wire.write(0x01);
-	Wire.endTransmission(false);
+	byte rc = Wire.endTransmission(false);
+        if(rc) {
+          Serial.print("rdCfg: ");
+          Serial.println(rc);
+        }
+
 	Wire.requestFrom(0x60, 2);
 	byte configLow = Wire.read();
 	byte configHigh = Wire.read();
-	Wire.endTransmission();
+
 	uint16_t config = ((uint16_t) (configHigh << 8) | configLow);
 	return config;
 }
