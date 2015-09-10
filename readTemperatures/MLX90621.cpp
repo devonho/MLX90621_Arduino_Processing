@@ -43,6 +43,7 @@ float MLX90621::getAmbient() {
 
 void MLX90621::setConfiguration() {
 	byte Hz_LSB;
+  refreshRate = 32;
 	switch (refreshRate) {
 	case 0:
 		Hz_LSB = 0b00111111;
@@ -103,15 +104,15 @@ void MLX90621::readEEPROM() { // Read in blocks of 32 bytes to accomodate Wire l
 void MLX90621::writeTrimmingValue() {
  	Wire.beginTransmission(0x60);
 	Wire.write(0x04);
-  Wire.write((byte) eepromData[OSC_TRIM_VALUE] - 0xAA);
-  Wire.write(eepromData[OSC_TRIM_VALUE]);
+	Wire.write((byte) eepromData[OSC_TRIM_VALUE] - 0xAA);
+	Wire.write(eepromData[OSC_TRIM_VALUE]);
 	Wire.write(0x56);
 	Wire.write(0x00);
 	byte rc = Wire.endTransmission(); 
-  if(rc) {
-    Serial.print("wrTrimmVal: ");
-    Serial.println(rc);
-  }
+	if(rc) {
+		Serial.print("wrTrimmVal: ");
+		Serial.println(rc);
+	}
 }
 
 void MLX90621::calculateTA(void) {
@@ -182,8 +183,7 @@ void MLX90621::calculateTO() {
 }
 
 void MLX90621::readIR() {
-
-  for(int j=0;j<128;j+=32) { // Read in blocks of 32 bytes to overcome Wire buffer limit
+  for(int j=0;j<64;j+=16) { // Read in blocks of 32 bytes to overcome Wire buffer limit   
     Wire.beginTransmission(0x60);
     Wire.write(0x02);
     Wire.write(j);
@@ -193,12 +193,12 @@ void MLX90621::readIR() {
     if(rc) {
       Serial.print("rdIR: ");
       Serial.println(rc);
-    }  
+    }      
     Wire.requestFrom(0x60, 32);
     for (int i = 0; i < 16; i++) {
       byte pixelDataLow = Wire.read();
       byte pixelDataHigh = Wire.read();
-      irData[i] = (int16_t) (pixelDataHigh << 8) | pixelDataLow;
+      irData[j+i] = (int16_t) (pixelDataHigh << 8) | pixelDataLow;
     }
   }
 }
@@ -229,10 +229,10 @@ void MLX90621::readCPIX() {
 	Wire.write(0x00);
 	Wire.write(0x01);
 	byte rc = Wire.endTransmission(false);
-  if(rc) {
-    Serial.print("rdCPIX: ");
-    Serial.println(rc);
-  }
+	if(rc) {
+		Serial.print("rdCPIX: ");
+		Serial.println(rc);
+	}
 	Wire.requestFrom(0x60, 2);
 	byte cpixLow = Wire.read();
 	byte cpixHigh = Wire.read();
@@ -249,10 +249,10 @@ uint16_t MLX90621::readConfig() {
 	Wire.write(0x00);
 	Wire.write(0x01);
 	byte rc = Wire.endTransmission(false);
-        if(rc) {
-          Serial.print("rdCfg: ");
-          Serial.println(rc);
-        }
+	if(rc) {
+		Serial.print("rdCfg: ");
+		Serial.println(rc);
+	}
 
 	Wire.requestFrom(0x60, 2);
 	byte configLow = Wire.read();

@@ -49,7 +49,7 @@
 #define POR_TEST 10
 
 class MLX90621 {
-private:
+public:
 	/* Variables */
 	byte refreshRate; //Set this value to your desired refresh frequency
 	int16_t irData[64]; //Contains the raw IR data from the sensor
@@ -60,7 +60,7 @@ private:
 	float k_t1, k_t2, emissivity, tgc, alpha_cp, a_cp, b_cp, v_th;
 	float a_ij[64], b_ij[64], alpha_ij[64];
 	byte loopCount = 0; //Used in main loop
-
+ 
 	/* Methods */
 	void readEEPROM();
 	void setConfiguration();
